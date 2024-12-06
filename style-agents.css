@@ -95,7 +95,7 @@ button {
 }
 
 button#connect-button {
-background-color: green;
+  background-color: #7459fe;
 }
 button#destroy-button{
   background-color: red;
