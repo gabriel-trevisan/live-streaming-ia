@@ -31,19 +31,50 @@ const agentIdLabel = document.getElementById('agentId-label');
 const chatIdLabel = document.getElementById('chatId-label');
 const textArea = document.getElementById("textArea");
 
+// Paste Your Created Agent and Chat IDs Here:
+agentId = "agt_cjN1sM7C"
+chatId = ""
+
+const videoUrl = await fetchAgentVideo(agentId);
+console.log("URL do vídeo:", videoUrl);
+
 // Play the idle video when the page is loaded
-window.onload = (event) => {
+playIdleVideo(videoUrl);
 
-  playIdleVideo()
+if (agentId == "" || agentId == undefined) {
+  console.log("Empty 'agentID' and 'chatID' variables\n\n1. Click on the 'Create new Agent with Knowledge' button\n2. Open the Console and wait for the process to complete\n3. Press on the 'Connect' button\n4. Type and send a message to the chat\nNOTE: You can store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats")
+} else {
+  console.log("You are good to go!\nClick on the 'Connect Button', Then send a new message\nAgent ID: ", agentId, "\nChat ID: ", chatId)
+  agentIdLabel.innerHTML = agentId
+  chatIdLabel.innerHTML = chatId
+}
 
-  if (agentId == "" || agentId == undefined) {
-    console.log("Empty 'agentID' and 'chatID' variables\n\n1. Click on the 'Create new Agent with Knowledge' button\n2. Open the Console and wait for the process to complete\n3. Press on the 'Connect' button\n4. Type and send a message to the chat\nNOTE: You can store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats")
-  } else {
-    console.log("You are good to go!\nClick on the 'Connect Button', Then send a new message\nAgent ID: ", agentId, "\nChat ID: ", chatId)
-    agentIdLabel.innerHTML = agentId
-    chatIdLabel.innerHTML = chatId
+/**
+ * Busca o vídeo relacionado ao Agent ID
+ * @param {string} agentId - ID do agente para buscar o vídeo.
+ * @returns {Promise<string>} URL do vídeo associado ao Agent ID.
+ */
+async function fetchAgentVideo(agentId) {
+  try {
+    axios.defaults.baseURL = `${DID_API.url}`;
+    axios.defaults.headers.common['Authorization'] = `Basic ${DID_API.key}`
+    axios.defaults.headers.common['content-type'] = 'application/json'
+
+    const response = await axios.get(`/agents/${agentId}`);
+
+    console.log(response);
+
+    if (response.data && response.data.presenter.idle_video) {
+      return response.data.presenter.idle_video;
+    } else {
+      throw new Error("URL do vídeo não encontrado na resposta.");
+    }
+  } catch (error) {
+    console.error(`Erro ao buscar o vídeo para o Agent ID ${agentId}:`, error.message);
+    throw error;
   }
 }
+
 async function createPeerConnection(offer, iceServers) {
   if (!peerConnection) {
     peerConnection = new RTCPeerConnection({ iceServers });
@@ -97,10 +128,12 @@ async function createPeerConnection(offer, iceServers) {
 
   return sessionClientAnswer;
 }
+
 function onIceGatheringStateChange() {
   iceGatheringStatusLabel.innerText = peerConnection.iceGatheringState;
   iceGatheringStatusLabel.className = 'iceGatheringState-' + peerConnection.iceGatheringState;
 }
+
 function onIceCandidate(event) {
   if (event.candidate) {
     const { candidate, sdpMid, sdpMLineIndex } = event.candidate;
@@ -121,6 +154,7 @@ function onIceCandidate(event) {
     });
   }
 }
+
 function onIceConnectionStateChange() {
   iceStatusLabel.innerText = peerConnection.iceConnectionState;
   iceStatusLabel.className = 'iceConnectionState-' + peerConnection.iceConnectionState;
@@ -129,15 +163,18 @@ function onIceConnectionStateChange() {
     closePC();
   }
 }
+
 function onConnectionStateChange() {
   // not supported in firefox
   peerStatusLabel.innerText = peerConnection.connectionState;
   peerStatusLabel.className = 'peerConnectionState-' + peerConnection.connectionState;
 }
+
 function onSignalingStateChange() {
   signalingStatusLabel.innerText = peerConnection.signalingState;
   signalingStatusLabel.className = 'signalingState-' + peerConnection.signalingState;
 }
+
 function onVideoStatusChange(videoIsPlaying, stream) {
   let status;
   if (videoIsPlaying) {
@@ -152,6 +189,7 @@ function onVideoStatusChange(videoIsPlaying, stream) {
   streamingStatusLabel.innerText = status;
   streamingStatusLabel.className = 'streamingState-' + status;
 }
+
 function onTrack(event) {
   /**
    * The following code is designed to provide information about wether currently there is data
@@ -181,6 +219,7 @@ function onTrack(event) {
     });
   }, 500);
 }
+
 function setVideoElement(stream) {
   if (!stream) return;
   // Add Animation Class
@@ -205,12 +244,13 @@ function setVideoElement(stream) {
       .catch((e) => { });
   }
 }
-function playIdleVideo() {
+
+function playIdleVideo(videoUrl) {
   // Add Animation Class
   videoElement.classList.toggle("animated")
 
   videoElement.srcObject = undefined;
-  videoElement.src = 'emma_idle.mp4';
+  videoElement.src = videoUrl;
   videoElement.loop = true;
 
   // Remove Animation Class after it's completed
@@ -218,6 +258,7 @@ function playIdleVideo() {
     videoElement.classList.remove("animated")
   }, 1000);
 }
+
 function stopAllStreams() {
   if (videoElement.srcObject) {
     console.log('stopping video streams');
@@ -225,6 +266,7 @@ function stopAllStreams() {
     videoElement.srcObject = null;
   }
 }
+
 function closePC(pc = peerConnection) {
   if (!pc) return;
   console.log('stopping peer connection');
@@ -265,6 +307,7 @@ async function fetchWithRetries(url, options, retries = 1) {
 }
 
 const connectButton = document.getElementById('connect-button');
+
 connectButton.onclick = async () => {
   if (agentId == "" || agentId === undefined) {
     return alert("1. Click on the 'Create new Agent with Knowledge' button\n2. Open the Console and wait for the process to complete\n3. Press on the 'Connect' button\n4. Type and send a message to the chat\nNOTE: You can store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats")
@@ -288,10 +331,11 @@ connectButton.onclick = async () => {
     }),
   });
 
-
   const { id: newStreamId, offer, ice_servers: iceServers, session_id: newSessionId } = await sessionResponse.json();
+
   streamId = newStreamId;
   sessionId = newSessionId;
+
   try {
     sessionClientAnswer = await createPeerConnection(offer, iceServers);
   } catch (e) {
@@ -316,6 +360,7 @@ connectButton.onclick = async () => {
 };
 
 const startButton = document.getElementById('start-button');
+
 startButton.onclick = async () => {
   // connectionState not supported in firefox
   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
@@ -360,6 +405,7 @@ startButton.onclick = async () => {
 };
 
 const destroyButton = document.getElementById('destroy-button');
+
 destroyButton.onclick = async () => {
   await fetch(`${DID_API.url}/${DID_API.service}/streams/${streamId}`, {
     method: 'DELETE',
@@ -387,8 +433,10 @@ async function agentsAPIworkflow() {
   async function retry(url, retries = 1) {
     const maxRetryCount = 5; // Maximum number of retries
     const maxDelaySec = 10; // Maximum delay in seconds
+
     try {
       let response = await axios.get(`${url}`)
+      
       if (response.data.status == "done") {
         return console.log(response.data.id + ": " + response.data.status)
       }
@@ -396,16 +444,19 @@ async function agentsAPIworkflow() {
         throw new Error("Status is not 'done'")
       }
     } catch (err) {
+      
       if (retries <= maxRetryCount) {
         const delay = Math.min(Math.pow(2, retries) / 4 + Math.random(), maxDelaySec) * 1000;
 
         await new Promise((resolve) => setTimeout(resolve, delay));
 
         console.log(`Retrying ${retries}/${maxRetryCount}. ${err}`);
+
         return retry(url, retries + 1);
       } else {
         agentIdLabel.innerHTML = `<span style='color:red'>Failed</span>`
         chatIdLabel.innerHTML = `<span style='color:red'>Failed</span>`
+
         throw new Error(`Max retries exceeded. error: ${err}`);
       }
     }
@@ -496,11 +547,12 @@ async function agentsAPIworkflow() {
   console.log("Create new Agent with Knowledge - DONE!\n Press on the 'Connect' button to proceed.\n Store the created 'agentID' and 'chatId' variables at the bottom of the JS file for future chats")
   agentIdLabel.innerHTML = agentId
   chatIdLabel.innerHTML = chatId
-  return { agentId: agentId, chatId: chatId }
 
+  return { agentId: agentId, chatId: chatId }
 }
 
 const agentsButton = document.getElementById("agents-button")
+
 agentsButton.onclick = async () => {
   try{
     const agentsIds = {} = await agentsAPIworkflow()
@@ -515,7 +567,3 @@ agentsButton.onclick = async () => {
     throw new Error(err)
   }
 }
-
-// Paste Your Created Agent and Chat IDs Here:
-agentId = ""
-chatId = ""
